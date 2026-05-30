@@ -35,13 +35,17 @@ void DenseMatrix::zero() {
   std::fill(data_.begin(), data_.end(), 0.0);
 }
 
-void DenseMatrix::uniformThread(real a, int block, int32_t seed) {
+void DenseMatrix::uniformThread(
+    real a,
+    unsigned int block,
+    unsigned int blocks,
+    int32_t seed) {
   std::minstd_rand rng(block + seed);
   std::uniform_real_distribution<> uniform(-a, a);
-  int64_t blockSize = (m_ * n_) / 10;
-  for (int64_t i = blockSize * block;
-       i < (m_ * n_) && i < blockSize * (block + 1);
-       i++) {
+  int64_t totalSize = m_ * n_;
+  int64_t start = totalSize * block / blocks;
+  int64_t end = totalSize * (block + 1) / blocks;
+  for (int64_t i = start; i < end; i++) {
     data_[i] = uniform(rng);
   }
 }
@@ -50,14 +54,15 @@ void DenseMatrix::uniform(real a, unsigned int thread, int32_t seed) {
   if (thread > 1) {
     std::vector<std::thread> threads;
     for (int i = 0; i < thread; i++) {
-      threads.push_back(std::thread([=]() { uniformThread(a, i, seed); }));
+      threads.push_back(
+          std::thread([=]() { uniformThread(a, i, thread, seed); }));
     }
     for (int32_t i = 0; i < threads.size(); i++) {
       threads[i].join();
     }
   } else {
     // webassembly can't instantiate `std::thread`
-    uniformThread(a, 0, seed);
+    uniformThread(a, 0, 1, seed);
   }
 }
 
@@ -182,7 +187,6 @@ template <unsigned Cols> void averageRowsFast(Vector& x, const std::vector<int32
   // Guard against empty list of rows with default NaN behavior.
   if (rows.empty()) {
     x.zero();
-    x.mul(1.0 / rows.size());
     return;
   }
 
@@ -209,6 +213,11 @@ template <unsigned Cols> void averageRowsFast(Vector& x, const std::vector<int32
 #endif
 
 void DenseMatrix::averageRowsToVector(Vector& x, const std::vector<int32_t>& rows) const {
+  if (rows.empty()) {
+    x.zero();
+    return;
+  }
+
 #if defined(__AVX512F__) || defined(__AVX__) || defined(__SSE__)
   switch (cols()) {
     case 512:
