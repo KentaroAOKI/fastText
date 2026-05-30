@@ -102,6 +102,8 @@ class Dictionary {
       const;
   int32_t getStringNoNewline(std::string_view, std::vector<int32_t>&,
       std::vector<int32_t>&) const;
+  int32_t getString(std::string_view, std::vector<int32_t>&,
+      std::vector<int32_t>&) const;
   void threshold(int64_t, int64_t);
   void prune(std::vector<int32_t>&);
   bool isPruned() {

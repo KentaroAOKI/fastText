@@ -80,10 +80,11 @@ void Loss::findKBest(
     if (output[i] < threshold) {
       continue;
     }
-    if (heap.size() == k && std_log(output[i]) < heap.front().first) {
+    real score = std_log(output[i]);
+    if (heap.size() == k && score < heap.front().first) {
       continue;
     }
-    heap.push_back(std::make_pair(std_log(output[i]), i));
+    heap.push_back(std::make_pair(score, i));
     std::push_heap(heap.begin(), heap.end(), comparePairs);
     if (heap.size() > k) {
       std::pop_heap(heap.begin(), heap.end(), comparePairs);

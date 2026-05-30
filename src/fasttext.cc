@@ -447,7 +447,7 @@ void FastText::test(std::istream& in, int32_t k, real threshold, Meter& meter)
 
     if (!labels.empty() && !line.empty()) {
       predictions.clear();
-      predict(k, line, predictions, threshold);
+      predict(k, line, predictions, threshold, state);
       meter.log(labels, predictions);
     }
   }
@@ -462,6 +462,18 @@ void FastText::predict(
     return;
   }
   Model::State state(args_->dim, dict_->nlabels(), 0);
+  predict(k, words, predictions, threshold, state);
+}
+
+void FastText::predict(
+    int32_t k,
+    const std::vector<int32_t>& words,
+    Predictions& predictions,
+    real threshold,
+    Model::State& state) const {
+  if (words.empty()) {
+    return;
+  }
   if (args_->model != model_name::sup) {
     throw std::invalid_argument("Model needs to be supervised for prediction!");
   }
@@ -481,7 +493,8 @@ bool FastText::predictLine(
   std::vector<int32_t> words, labels;
   dict_->getLine(in, words, labels);
   Predictions linePredictions;
-  predict(k, words, linePredictions, threshold);
+  Model::State state(args_->dim, dict_->nlabels(), 0);
+  predict(k, words, linePredictions, threshold, state);
   for (const auto& p : linePredictions) {
     predictions.push_back(
         std::make_pair(std::exp(p.first), dict_->getLabel(p.second)));
