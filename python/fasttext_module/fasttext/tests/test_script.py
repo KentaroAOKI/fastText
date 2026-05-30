@@ -332,6 +332,21 @@ class TestFastTextUnitPy(unittest.TestCase):
             f = build_unsupervised_model(get_random_data(100), kwargs)
             self.assertEqual(f.get_dimension(), kwargs["dim"])
 
+    def gen_test_unsupervised_seed(self, kwargs):
+        data = [
+            "alpha beta gamma",
+            "beta gamma delta",
+            "alpha delta epsilon",
+        ] * 10
+        kwargs = kwargs.copy()
+        kwargs["thread"] = 1
+        kwargs["seed"] = 123
+        model1 = build_unsupervised_model(data, kwargs.copy())
+        model2 = build_unsupervised_model(data, kwargs.copy())
+        vec1 = model1.get_word_vector("alpha")
+        vec2 = model2.get_word_vector("alpha")
+        self.assertTrue(np.isclose(vec1, vec2, atol=0, rtol=0).all())
+
     def gen_test_supervised_dimension(self, kwargs):
         if "dim" in kwargs:
             f = build_supervised_model(get_random_data(100), kwargs)

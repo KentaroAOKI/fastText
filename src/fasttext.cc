@@ -389,6 +389,9 @@ void FastText::cbow(
     real lr,
     const std::vector<int32_t>& line) {
   std::vector<int32_t> bow;
+  const int32_t reservePerToken =
+      args_->maxn > 0 ? std::max<int32_t>(1, args_->maxn * 4) : 1;
+  bow.reserve(2 * args_->ws * reservePerToken);
   std::uniform_int_distribution<> uniform(1, args_->ws);
   for (int32_t w = 0; w < line.size(); w++) {
     int32_t boundary = uniform(state.rng);
