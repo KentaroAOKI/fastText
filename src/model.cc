@@ -24,6 +24,9 @@ Model::State::State(int32_t hiddenSize, int32_t outputSize, int32_t seed)
       rng(seed) {}
 
 real Model::State::getLoss() const {
+  if (nexamples_ == 0) {
+    return 0.0;
+  }
   return lossValue_ / nexamples_;
 }
 

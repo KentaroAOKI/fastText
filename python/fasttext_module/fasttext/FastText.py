@@ -348,13 +348,13 @@ class _FastText:
         it's memory footprint.
         """
         a = self.f.getArgs()
-        if not epoch:
+        if epoch is None:
             epoch = a.epoch
-        if not lr:
+        if lr is None:
             lr = a.lr
-        if not thread:
+        if thread is None:
             thread = a.thread
-        if not verbose:
+        if verbose is None:
             verbose = a.verbose
         if retrain and not input:
             raise ValueError("Need input file path if retraining")
@@ -597,6 +597,7 @@ def train_unsupervised(*kargs, **kwargs):
         "label",
         "verbose",
         "pretrainedVectors",
+        "seed",
     ]
     args, manually_set_args = read_args(kargs, kwargs, arg_names, unsupervised_default)
     a = _build_args(args, manually_set_args)
