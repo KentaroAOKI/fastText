@@ -21,7 +21,7 @@ import subprocess
 import platform
 import io
 
-__version__ = "0.9.2"
+__version__ = "0.9.4"
 FASTTEXT_SRC = "src"
 
 # Based on https://github.com/pybind/python_example
@@ -36,9 +36,11 @@ class get_pybind_include:
 
     def __init__(self, user=False):
         try:
-            pass
+            import pybind11  # noqa: F401
         except ImportError:
-            if subprocess.call([sys.executable, "-m", "pip", "install", "pybind11"]):
+            if subprocess.call(
+                [sys.executable, "-m", "pip", "install", "pybind11>=2.13.6"]
+            ):
                 raise RuntimeError("pybind11 install failed.")
 
         self.user = user
@@ -169,7 +171,7 @@ def _get_readme():
 
 
 setup(
-    name="fasttext",
+    name="fasttext-modern-wheel",
     version=__version__,
     author="Onur Celebi",
     author_email="celebio@fb.com",
@@ -194,7 +196,7 @@ setup(
         "Operating System :: Unix",
         "Operating System :: MacOS",
     ],
-    install_requires=["pybind11>=2.2", "setuptools >= 0.7.0", "numpy"],
+    install_requires=["pybind11>=2.13.6", "setuptools >= 0.7.0", "numpy"],
     cmdclass={"build_ext": BuildExt},
     packages=[
         str("fasttext"),

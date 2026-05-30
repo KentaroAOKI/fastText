@@ -1,6 +1,24 @@
 # fastText
 [fastText](https://fasttext.cc/) is a library for efficient learning of word representations and sentence classification.
 
+## fasttext-modern-wheel
+
+`fasttext-modern-wheel` is an unofficial fork of the fastText Python bindings.
+It provides compatibility fixes for newer Python and NumPy versions while
+keeping the import name and API compatible with `fasttext`.
+
+Install the Python package with:
+
+```
+$ pip install fasttext-modern-wheel
+```
+
+Use it with the existing import name:
+
+```python
+import fasttext
+```
+
 [![CircleCI](https://circleci.com/gh/facebookresearch/fastText/tree/master.svg?style=svg)](https://circleci.com/gh/facebookresearch/fastText/tree/master)
 
 ## Table of contents
@@ -68,11 +86,11 @@ For the word-similarity evaluation script you will need:
 
 For the python bindings (see the subdirectory python) you will need:
 
-* Python version 2.7 or >=3.4
+* Python version >=3.9
 * NumPy & SciPy
-* [pybind11](https://github.com/pybind/pybind11)
+* [pybind11](https://github.com/pybind/pybind11) >=2.13.6
 
-One of the oldest distributions we successfully built and tested the Python bindings under is [Debian jessie](https://www.debian.org/releases/jessie/).
+Python 3.13 and Python 3.14 are verified for this fork.
 
 If these requirements make it impossible for you to use fastText, please open an issue and we will try to accommodate you.
 
@@ -113,10 +131,17 @@ This will create the fasttext binary and also all relevant libraries (shared, st
 
 ### Building fastText for Python
 
-For now this is not part of a release, so you will need to clone the master branch.
+The Python package is published as `fasttext-modern-wheel`, while the import
+name remains `fasttext`.
 
 ```
-$ git clone https://github.com/facebookresearch/fastText.git
+$ pip install fasttext-modern-wheel
+```
+
+To build from source:
+
+```
+$ git clone <repository-url>
 $ cd fastText
 $ pip install .
 ```
