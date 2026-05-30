@@ -85,6 +85,27 @@ std::pair<std::vector<py::str>, std::vector<py::str>> getLineText(
   return std::pair<std::vector<py::str>, std::vector<py::str>>(words, labels);
 }
 
+void predictText(
+    fasttext::FastText& m,
+    const std::string& text,
+    int32_t k,
+    fasttext::real threshold,
+    const std::shared_ptr<const fasttext::Dictionary>& d,
+    std::vector<std::pair<fasttext::real, std::string>>& predictions,
+    std::vector<int32_t>& words,
+    std::vector<int32_t>& labels,
+    fasttext::Predictions& linePredictions,
+    fasttext::Model::State& state) {
+  predictions.clear();
+  linePredictions.clear();
+  d->getString(text, words, labels);
+  m.predict(k, words, linePredictions, threshold, state);
+  predictions.reserve(linePredictions.size());
+  for (const auto& p : linePredictions) {
+    predictions.emplace_back(std::exp(p.first), d->getLabel(p.second));
+  }
+}
+
 PYBIND11_MODULE(fasttext_pybind, m) {
   py::class_<fasttext::Args>(m, "args")
       .def(py::init<>())
@@ -400,9 +421,23 @@ PYBIND11_MODULE(fasttext_pybind, m) {
              int32_t k,
              fasttext::real threshold,
              const char* onUnicodeError) {
-            std::stringstream ioss(text);
             std::vector<std::pair<fasttext::real, std::string>> predictions;
-            m.predictLine(ioss, predictions, k, threshold);
+            std::vector<int32_t> words;
+            std::vector<int32_t> labels;
+            fasttext::Predictions linePredictions;
+            std::shared_ptr<const fasttext::Dictionary> d = m.getDictionary();
+            fasttext::Model::State state(m.getArgs().dim, d->nlabels(), 0);
+            predictText(
+                m,
+                text,
+                k,
+                threshold,
+                d,
+                predictions,
+                words,
+                labels,
+                linePredictions,
+                state);
 
             return castToPythonString(predictions, onUnicodeError);
           })
@@ -418,12 +453,30 @@ PYBIND11_MODULE(fasttext_pybind, m) {
             std::vector<py::array_t<fasttext::real>> allProbabilities;
             std::vector<std::vector<py::str>> allLabels;
             std::vector<std::pair<fasttext::real, std::string>> predictions;
+            std::vector<int32_t> words;
+            std::vector<int32_t> labelsBuffer;
+            fasttext::Predictions linePredictions;
+            std::shared_ptr<const fasttext::Dictionary> d = m.getDictionary();
+            fasttext::Model::State state(m.getArgs().dim, d->nlabels(), 0);
+            allProbabilities.reserve(lines.size());
+            allLabels.reserve(lines.size());
 
             for (const std::string& text : lines) {
-              std::stringstream ioss(text);
-              m.predictLine(ioss, predictions, k, threshold);
+              predictText(
+                  m,
+                  text,
+                  k,
+                  threshold,
+                  d,
+                  predictions,
+                  words,
+                  labelsBuffer,
+                  linePredictions,
+                  state);
               std::vector<fasttext::real> probabilities;
               std::vector<py::str> labels;
+              probabilities.reserve(predictions.size());
+              labels.reserve(predictions.size());
 
               for (const auto& prediction : predictions) {
                 probabilities.push_back(prediction.first);

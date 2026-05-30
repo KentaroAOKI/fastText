@@ -412,6 +412,11 @@ int32_t Dictionary::getLine(
 }
 
 namespace {
+bool isWordSeparator(char c) {
+  return c == ' ' || c == '\n' || c == '\r' || c == '\t' || c == '\v' ||
+      c == '\f' || c == '\0';
+}
+
 bool readWordNoNewline(std::string_view& in, std::string_view& word) {
   const std::string_view spaces(" \n\r\t\v\f\0");
   std::string_view::size_type begin = in.find_first_not_of(spaces);
@@ -422,6 +427,36 @@ bool readWordNoNewline(std::string_view& in, std::string_view& word) {
   in.remove_prefix(begin);
   word = in.substr(0, in.find_first_of(spaces));
   in.remove_prefix(word.size());
+  return true;
+}
+
+bool readWordString(std::string_view& in, std::string_view& word) {
+  word = {};
+  while (!in.empty()) {
+    char c = in.front();
+    if (!isWordSeparator(c)) {
+      break;
+    }
+    in.remove_prefix(1);
+    if (c == '\n') {
+      word = Dictionary::EOS;
+      return true;
+    }
+  }
+  if (in.empty()) {
+    return false;
+  }
+
+  size_t end = 0;
+  while (end < in.size() && !isWordSeparator(in[end])) {
+    end++;
+  }
+  word = in.substr(0, end);
+  if (end < in.size() && in[end] == '\n') {
+    in.remove_prefix(end);
+  } else {
+    in.remove_prefix(std::min(end + 1, in.size()));
+  }
   return true;
 }
 } // namespace
@@ -437,6 +472,36 @@ int32_t Dictionary::getStringNoNewline(
   words.clear();
   labels.clear();
   while (readWordNoNewline(in, token)) {
+    uint32_t h = hash(token);
+    int32_t wid = getId(token, h);
+    entry_type type = wid < 0 ? getType(token) : getType(wid);
+
+    ntokens++;
+    if (type == entry_type::word) {
+      addSubwords(words, token, wid);
+      word_hashes.push_back(h);
+    } else if (type == entry_type::label && wid >= 0) {
+      labels.push_back(wid - nwords_);
+    }
+    if (token == EOS) {
+      break;
+    }
+  }
+  addWordNgrams(words, word_hashes, args_->wordNgrams);
+  return ntokens;
+}
+
+int32_t Dictionary::getString(
+    std::string_view in,
+    std::vector<int32_t>& words,
+    std::vector<int32_t>& labels) const {
+  std::vector<int32_t> word_hashes;
+  std::string_view token;
+  int32_t ntokens = 0;
+
+  words.clear();
+  labels.clear();
+  while (readWordString(in, token)) {
     uint32_t h = hash(token);
     int32_t wid = getId(token, h);
     entry_type type = wid < 0 ? getType(token) : getType(wid);

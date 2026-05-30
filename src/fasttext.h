@@ -134,6 +134,12 @@ class FastText {
       const std::vector<int32_t>& words,
       Predictions& predictions,
       real threshold = 0.0) const;
+  void predict(
+      int32_t k,
+      const std::vector<int32_t>& words,
+      Predictions& predictions,
+      real threshold,
+      Model::State& state) const;
 
   bool predictLine(
       std::istream& in,
