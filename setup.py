@@ -21,7 +21,7 @@ import subprocess
 import platform
 import io
 
-__version__ = "0.9.2"
+__version__ = "0.9.4"
 FASTTEXT_SRC = "src"
 
 # Based on https://github.com/pybind/python_example
@@ -171,7 +171,7 @@ def _get_readme():
 
 
 setup(
-    name="fasttext",
+    name="fasttext-modern-wheel",
     version=__version__,
     author="Onur Celebi",
     author_email="celebio@fb.com",
